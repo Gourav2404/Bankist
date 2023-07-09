@@ -62,11 +62,11 @@ const inputCloseUsername = document.querySelector('.form__input--user');
 const inputClosePin = document.querySelector('.form__input--pin');
 
 
-const displayMovements = function (movements , sort = false) {
+const displayMovements = function (acc , sort = false) {
 
   containerMovements.innerHTML = '';
 
-  const movs = sort ? movements.slice().sort((a , b) => a - b ) : movements
+  const movs = sort ? acc.movements.slice().sort((a , b) => a - b ) : acc.movements
 
   movs.forEach( function (mov , i) {
     const type = mov > 0 ? 'deposit' : 'withdrawal'
@@ -75,7 +75,7 @@ const displayMovements = function (movements , sort = false) {
     <div class="movements__row">
       <div class="movements__type movements__type--${type}">${i +1} ${type}</div>
       <div class="movements__date">3 days ago</div>
-      <div class="movements__value">${mov}</div>
+      <div class="movements__value">${mov}$</div>
     </div>
     `
     containerMovements.insertAdjacentHTML
@@ -128,15 +128,46 @@ const createUsernames = function(accs) {
 createUsernames(accounts)
 const updateUI = function (acc) {
   // Display Movements 
-  displayMovements(currentAccount.movements)
+  displayMovements(acc)
   // Diaplat Balance 
   calcDisplayBalance(currentAccount)
   // Display Summary  
   calcDisplaySummary(currentAccount)
 }
 
+const startLogOutTimer = function(){
+  // const logoutTimeLeftInSec = localStorage.getItem("logout-time") - Math.floor
+  let time = 10
+
+  const timer = setInterval(function(){
+    const min = String(Math.trunc(time / 60)).padStart(2,0);
+    const sec = String(time % 60).padStart(2,0);
+    labelTimer.textContent = `${min}:${sec}`;
+
+    
+
+    if (time === 0) {
+      clearInterval(timer)
+      labelWelcome.textContent = ` Login to get started, ${currentAccount.owner.split(' ')[0]}`
+      containerApp.style.opacity = 0 
+
+    }
+    time--
+  }, 1000)
+  return timer
+}
+
 //EVENT HENDLERS 
-let currentAccount
+let currentAccount,timer
+
+const now = new Date();
+const day = `${now.getDate()}`.padStart(2,0);
+const month = `${now.getMonth() + 1}`.padStart(2,0);
+const year = now.getFullYear();
+const hour = now.getHours();
+const min = now.getMinutes()
+labelDate.textContent = `${day}/${month}/${year}, ${hour}:${min}`
+
 
 btnLogin.addEventListener('click' , function (e) {
   e.preventDefault();
@@ -151,6 +182,9 @@ btnLogin.addEventListener('click' , function (e) {
       //clear Input fiels 
       inputLoginUsername.value = inputLoginPin.value = '';
       inputLoginPin.blur();
+
+      if(timer)clearInterval(timer);
+      timer = startLogOutTimer()
 
       updateUI(currentAccount)
   }
@@ -173,6 +207,9 @@ btnTransfer.addEventListener('click' , function(e){
         receiverAcc.movements.push(amount)
 
         updateUI(currentAccount)
+
+        clearInterval(timer);
+        timer = startLogOutTimer()
     }
 })
 
